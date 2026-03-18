@@ -1,306 +1,163 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Форум предложений</title>
-
-<style>
-body { 
-  font-family: 'Inter', sans-serif; 
-  background: #f4f7f6; 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  padding: 20px; 
-}
-
-.container { 
-  width: 100%; 
-  max-width: 500px; 
-  background: white; 
-  padding: 25px; 
-  border-radius: 12px; 
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
-  margin-bottom: 20px; 
-}
-
-.auth-bar { 
-  background: white; 
-  padding: 15px; 
-  border-radius: 12px; 
-  margin-bottom: 20px; 
-  display: flex; 
-  align-items: center; 
-  gap: 15px; 
-  box-shadow: 0 2px 10px rgba(0,0,0,0.05); 
-}
-
-.user-avatar { 
-  width: 40px; 
-  height: 40px; 
-  border-radius: 50%; 
-  border: 2px solid #007bff; 
-}
-
-input { 
-  width: 100%; 
-  padding: 12px; 
-  margin: 8px 0; 
-  border: 1px solid #ddd; 
-  border-radius: 6px; 
-  box-sizing: border-box; 
-}
-
-button { 
-  background: #007bff; 
-  color: white; 
-  border: none; 
-  padding: 12px; 
-  border-radius: 6px; 
-  width: 100%; 
-  font-size: 16px; 
-  font-weight: 600; 
-  cursor: pointer; 
-  transition: 0.3s; 
-}
-
-button:hover { background: #0056b3; }
-
-button.disabled { 
-  background: #ccc; 
-  cursor: not-allowed; 
-}
-
-.logo-btn { 
-  background: #f7f7f7; 
-  padding: 8px 15px; 
-  width: auto; 
-  font-size: 14px; 
-  color: black;
-}
-
-.post { 
-  background: #fff; 
-  border: 1px solid #eaeaea; 
-  padding: 15px; 
-  margin-top: 15px; 
-  border-radius: 8px; 
-  width: 100%; 
-  max-width: 500px; 
-}
-
-.post-header { 
-  display: flex; 
-  align-items: center; 
-  gap: 10px; 
-  margin-bottom: 10px; 
-}
-
-.post-avatar { 
-  width: 30px; 
-  height: 30px; 
-  border-radius: 50%; 
-}
-
-.like-btn { 
-  cursor: pointer; 
-  border: none; 
-  background: #f9f9fa; 
-  padding: 5px 12px; 
-  border-radius: 20px; 
-  margin-top: 10px; 
-  color: black;
-}
-
-.time { 
-  font-size: 11px; 
-  color: #999; 
-  margin-left: auto; 
-}
-
-.post-image {
-  width: 100%;
-  max-height: 350px;
-  object-fit: cover;
-  margin-top: 10px;
-  border-radius: 10px;
-  border: 1px solid #eaeaea;
-}
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Форум на Supabase</title>
+    <style>
+        /* Твои оригинальные стили здесь... */
+        body { font-family: 'Inter', sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .auth-bar { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #007bff; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        button:hover { background: #0056b3; }
+        .logo-btn { background: #f7f7f7; padding: 8px 15px; width: auto; font-size: 14px; color: black; }
+        .post { background: #fff; border: 1px solid #eaeaea; padding: 15px; margin-top: 15px; border-radius: 8px; width: 100%; max-width: 500px; }
+        .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .post-avatar { width: 30px; height: 30px; border-radius: 50%; }
+        .like-btn { cursor: pointer; border: none; background: #f9f9fa; padding: 5px 12px; border-radius: 20px; margin-top: 10px; }
+        .time { font-size: 11px; color: #999; margin-left: auto; }
+        .post-image { width: 100%; max-height: 350px; object-fit: cover; margin-top: 10px; border-radius: 10px; }
+    </style>
 </head>
-
 <body>
 
-<div id="authSection" class="container" style="max-width: 500px; text-align: center;">
-  <button id="loginBtn" class="logo-btn">Вход через Google</button>
-
-  <div id="userInfo" style="display: none;" class="auth-bar">
-    <img id="userPhoto" class="user-avatar" src="" alt="Avatar">
-    <span id="userName" style="font-weight: bold;"></span>
-    <button id="logoutBtn" class="logo-btn">Выйти</button>
-  </div>
+<div id="authSection" class="container" style="text-align: center;">
+    <button id="loginBtn" class="logo-btn">Вход через Google</button>
+    <div id="userInfo" style="display: none;" class="auth-bar">
+        <img id="userPhoto" class="user-avatar" src="" alt="Avatar">
+        <span id="userName" style="font-weight: bold;"></span>
+        <button id="logoutBtn" class="logo-btn">Выйти</button>
+    </div>
 </div>
 
 <div id="messageForm" class="container" style="display: none;">
-  <h3>Создать запись</h3>
-
-  <input type="text" id="name" placeholder="Имя проекта" readonly>
-  <input type="text" id="email" placeholder="Ваш Email" readonly>
-  <input type="text" id="content" placeholder="Что у вас нового?">
-  <input type="file" id="imageInput" accept="image/*">
-
-  <button id="mainBtn">Опубликовать в облако</button>
+    <h3>Создать запись</h3>
+    <input type="text" id="content" placeholder="Что у вас нового?">
+    <input type="file" id="imageInput" accept="image/*">
+    <button id="mainBtn">Опубликовать в Supabase</button>
 </div>
 
 <div id="feed" style="width: 100%; max-width: 500px;"></div>
 
 <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { 
-  getFirestore, collection, addDoc, query, orderBy,
-  onSnapshot, serverTimestamp, updateDoc, doc, increment
-} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+    // 1. НАСТРОЙКИ (Замени на свои из Project Settings -> API)
+    const SUPABASE_URL = 'https://roctcjxbbpqnwggivdpa.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvY3RjanhiYnBxbndnZ2l2ZHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNjA1MjYsImV4cCI6MjA4ODkzNjUyNn0.ZOhSBy-PLAqUMw98QuMqVMctPJVaL7ijjVG2lJs6nGU';
+    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-import {
-  getAuth, GoogleAuthProvider, signInWithPopup,
-  signOut, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userInfo = document.getElementById("userInfo");
+    const messageForm = document.getElementById("messageForm");
+    let currentUser = null;
 
-import {
-  getStorage, ref, uploadBytes, getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js";
+    // --- АВТОРИЗАЦИЯ ---
+    loginBtn.onclick = () => supabase.auth.signInWithOAuth({ provider: 'google' });
+    logoutBtn.onclick = () => supabase.auth.signOut();
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCk6uLrX34xpTxyHC0_cCA9_dM4DeFztLI",
-  authDomain: "amoree-91384.firebaseapp.com",
-  databaseURL: "https://amoree-91384-default-rtdb.firebaseio.com",
-  projectId: "amoree-91384",
-  storageBucket: "amoree-91384.firebasestorage.app",
-  messagingSenderId: "102582885984",
-  appId: "1:102582885984:web:a28c31ec5f83fa71b2ad05",
-  measurementId: "G-4MVG1QSLKR"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-const storage = getStorage(app);
-const provider = new GoogleAuthProvider();
-
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-const userInfo = document.getElementById("userInfo");
-const messageForm = document.getElementById("messageForm");
-
-loginBtn.onclick = () => signInWithPopup(auth, provider);
-logoutBtn.onclick = () => signOut(auth);
-
-onAuthStateChanged(auth, user => {
-  if (user) {
-    loginBtn.style.display = "none";
-    userInfo.style.display = "flex";
-    messageForm.style.display = "block";
-
-    document.getElementById("userName").innerText = user.displayName;
-    document.getElementById("userPhoto").src = user.photoURL;
-    document.getElementById("name").value = user.displayName;
-    document.getElementById("email").value = user.email;
-  } else {
-    loginBtn.style.display = "block";
-    userInfo.style.display = "none";
-    messageForm.style.display = "none";
-  }
-});
-
-// функция лайка
-window.pressLike = async (id) => {
-  await updateDoc(doc(db, "requests", id), {
-    likes: increment(1)
-  });
-};
-
-// функция загрузки картинки
-async function uploadImage(file) {
-  if (!file) return "";
-
-  const user = auth.currentUser;
-  if (!user) throw new Error("Пользователь не авторизован");
-
-  const fileName = `images/${user.uid}/${Date.now()}_${file.name}`;
-  const storageRef = ref(storage, fileName);
-
-  await uploadBytes(storageRef, file);
-  const imageUrl = await getDownloadURL(storageRef);
-
-  return imageUrl;
-}
-
-document.getElementById("mainBtn").onclick = async () => {
-  const content = document.getElementById("content").value.trim();
-  const imageFile = document.getElementById("imageInput").files[0];
-
-  if (!content && !imageFile) {
-    return alert("Введите текст или выберите картинку");
-  }
-
-  try {
-    let imageUrl = "";
-
-    if (imageFile) {
-      imageUrl = await uploadImage(imageFile);
-    }
-
-    await addDoc(collection(db, "requests"), {
-      name: auth.currentUser.displayName,
-      email: auth.currentUser.email,
-      photo: auth.currentUser.photoURL,
-      text: content,
-      imageUrl: imageUrl,
-      likes: 0,
-      timestamp: serverTimestamp()
+    supabase.auth.onAuthStateChange((event, session) => {
+        currentUser = session?.user || null;
+        if (currentUser) {
+            loginBtn.style.display = "none";
+            userInfo.style.display = "flex";
+            messageForm.style.display = "block";
+            document.getElementById("userName").innerText = currentUser.user_metadata.full_name;
+            document.getElementById("userPhoto").src = currentUser.user_metadata.avatar_url;
+        } else {
+            loginBtn.style.display = "block";
+            userInfo.style.display = "none";
+            messageForm.style.display = "none";
+        }
     });
 
-    document.getElementById("content").value = "";
-    document.getElementById("imageInput").value = "";
+    // --- ЛАЙКИ ---
+    window.pressLike = async (id, currentLikes) => {
+        await supabase
+            .from('requests')
+            .update({ likes: currentLikes + 1 })
+            .eq('id', id);
+        fetchPosts(); // Обновляем ленту
+    };
 
-  } catch (e) {
-    console.error(e);
-    alert("Ошибка загрузки или доступа! Проверьте Rules в Firebase.");
-  }
-};
+    // --- ЗАГРУЗКА КАРТИНКИ ---
+    async function uploadImage(file) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${currentUser.id}/${fileName}`;
 
-const q = query(collection(db, "requests"), orderBy("timestamp", "desc"));
+        const { error: uploadError } = await supabase.storage
+            .from('images')
+            .upload(filePath, file);
 
-onSnapshot(q, (snapshot) => {
-  const feed = document.getElementById("feed");
-  feed.innerHTML = "";
+        if (uploadError) throw uploadError;
 
-  snapshot.forEach((docItem) => {
-    const data = docItem.data();
+        const { data } = supabase.storage.from('images').getPublicUrl(filePath);
+        return data.publicUrl;
+    }
 
-    feed.innerHTML += `
-      <div class="post">
-        <div class="post-header">
-          <img src="${data.photo || 'https://via.placeholder.com/30'}" class="post-avatar">
-          <b>${data.name}</b>
-          <span class="time">${data.timestamp?.toDate().toLocaleTimeString() || '--:--'}</span>
-        </div>
+    // --- ПУБЛИКАЦИЯ ---
+    document.getElementById("mainBtn").onclick = async () => {
+        const content = document.getElementById("content").value.trim();
+        const imageFile = document.getElementById("imageInput").files[0];
 
-        <p>${data.text || ""}</p>
+        try {
+            let imageUrl = "";
+            if (imageFile) imageUrl = await uploadImage(imageFile);
 
-        ${data.imageUrl ? `<img src="${data.imageUrl}" class="post-image" alt="Картинка поста">` : ""}
+            const { error } = await supabase.from('requests').insert([{
+                name: currentUser.user_metadata.full_name,
+                email: currentUser.email,
+                photo: currentUser.user_metadata.avatar_url,
+                text: content,
+                imageUrl: imageUrl,
+                likes: 0
+            }]);
 
-        <button class="like-btn" onclick="pressLike('${docItem.id}')">👍 ${data.likes || 0}</button>
-      </div>
-    `;
-  });
-});
+            if (error) throw error;
+            
+            document.getElementById("content").value = "";
+            document.getElementById("imageInput").value = "";
+            fetchPosts();
+        } catch (e) {
+            alert("Ошибка! Проверь RLS политики в Supabase.");
+            console.error(e);
+        }
+    };
 
-window.db = db;
+    // --- ПОЛУЧЕНИЕ ПОСТОВ ---
+    async function fetchPosts() {
+        const { data, error } = await supabase
+            .from('requests')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) return console.error(error);
+
+        const feed = document.getElementById("feed");
+        feed.innerHTML = data.map(post => `
+            <div class="post">
+                <div class="post-header">
+                    <img src="${post.photo || ''}" class="post-avatar">
+                    <b>${post.name}</b>
+                    <span class="time">${new Date(post.created_at).toLocaleTimeString()}</span>
+                </div>
+                <p>${post.text || ""}</p>
+                ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image">` : ""}
+                <button class="like-btn" onclick="pressLike(${post.id}, ${post.likes})">👍 ${post.likes}</button>
+            </div>
+        `).join('');
+    }
+
+    // Запуск при загрузке
+    fetchPosts();
+    // Автообновление каждые 5 сек
+    setInterval(fetchPosts, 5000);
+
 </script>
 </body>
 </html>
