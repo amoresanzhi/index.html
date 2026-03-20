@@ -1,163 +1,44 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Форум на Supabase</title>
-    <style>
-        /* Твои оригинальные стили здесь... */
-        body { font-family: 'Inter', sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { width: 100%; max-width: 500px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .auth-bar { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #007bff; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        button { background: #007bff; color: white; border: none; padding: 12px; border-radius: 6px; width: 100%; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        button:hover { background: #0056b3; }
-        .logo-btn { background: #f7f7f7; padding: 8px 15px; width: auto; font-size: 14px; color: black; }
-        .post { background: #fff; border: 1px solid #eaeaea; padding: 15px; margin-top: 15px; border-radius: 8px; width: 100%; max-width: 500px; }
-        .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .post-avatar { width: 30px; height: 30px; border-radius: 50%; }
-        .like-btn { cursor: pointer; border: none; background: #f9f9fa; padding: 5px 12px; border-radius: 20px; margin-top: 10px; }
-        .time { font-size: 11px; color: #999; margin-left: auto; }
-        .post-image { width: 100%; max-height: 350px; object-fit: cover; margin-top: 10px; border-radius: 10px; }
-    </style>
+  <title>Supabase Google Auth</title>
 </head>
 <body>
+  <h1>Login with Google</h1>
 
-<div id="authSection" class="container" style="text-align: center;">
-    <button id="loginBtn" class="logo-btn">Вход через Google</button>
-    <div id="userInfo" style="display: none;" class="auth-bar">
-        <img id="userPhoto" class="user-avatar" src="" alt="Avatar">
-        <span id="userName" style="font-weight: bold;"></span>
-        <button id="logoutBtn" class="logo-btn">Выйти</button>
-    </div>
-</div>
+  <button onclick="login()">Login</button>
+  <button onclick="logout()">Logout</button>
 
-<div id="messageForm" class="container" style="display: none;">
-    <h3>Создать запись</h3>
-    <input type="text" id="content" placeholder="Что у вас нового?">
-    <input type="file" id="imageInput" accept="image/*">
-    <button id="mainBtn">Опубликовать в Supabase</button>
-</div>
+  <pre id="user"></pre>
 
-<div id="feed" style="width: 100%; max-width: 500px;"></div>
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-<script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    const supabase = createClient(
+      'https://YOUR_PROJECT_ID.supabase.co',
+      'YOUR_ANON_KEY'
+    )
 
-    // 1. НАСТРОЙКИ (Замени на свои из Project Settings -> API)
-    const SUPABASE_URL = 'https://roctcjxbbpqnwggivdpa.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJvY3RjanhiYnBxbndnZ2l2ZHBhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzNjA1MjYsImV4cCI6MjA4ODkzNjUyNn0.ZOhSBy-PLAqUMw98QuMqVMctPJVaL7ijjVG2lJs6nGU';
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const userInfo = document.getElementById("userInfo");
-    const messageForm = document.getElementById("messageForm");
-    let currentUser = null;
-
-    // --- АВТОРИЗАЦИЯ ---
-    loginBtn.onclick = () => supabase.auth.signInWithOAuth({ provider: 'google' });
-    logoutBtn.onclick = () => supabase.auth.signOut();
-
-    supabase.auth.onAuthStateChange((event, session) => {
-        currentUser = session?.user || null;
-        if (currentUser) {
-            loginBtn.style.display = "none";
-            userInfo.style.display = "flex";
-            messageForm.style.display = "block";
-            document.getElementById("userName").innerText = currentUser.user_metadata.full_name;
-            document.getElementById("userPhoto").src = currentUser.user_metadata.avatar_url;
-        } else {
-            loginBtn.style.display = "block";
-            userInfo.style.display = "none";
-            messageForm.style.display = "none";
-        }
-    });
-
-    // --- ЛАЙКИ ---
-    window.pressLike = async (id, currentLikes) => {
-        await supabase
-            .from('requests')
-            .update({ likes: currentLikes + 1 })
-            .eq('id', id);
-        fetchPosts(); // Обновляем ленту
-    };
-
-    // --- ЗАГРУЗКА КАРТИНКИ ---
-    async function uploadImage(file) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${currentUser.id}/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-            .from('images')
-            .upload(filePath, file);
-
-        if (uploadError) throw uploadError;
-
-        const { data } = supabase.storage.from('images').getPublicUrl(filePath);
-        return data.publicUrl;
+    async function login() {
+      await supabase.auth.signInWithOAuth({
+        provider: 'google'
+      })
     }
 
-    // --- ПУБЛИКАЦИЯ ---
-    document.getElementById("mainBtn").onclick = async () => {
-        const content = document.getElementById("content").value.trim();
-        const imageFile = document.getElementById("imageInput").files[0];
-
-        try {
-            let imageUrl = "";
-            if (imageFile) imageUrl = await uploadImage(imageFile);
-
-            const { error } = await supabase.from('requests').insert([{
-                name: currentUser.user_metadata.full_name,
-                email: currentUser.email,
-                photo: currentUser.user_metadata.avatar_url,
-                text: content,
-                imageUrl: imageUrl,
-                likes: 0
-            }]);
-
-            if (error) throw error;
-            
-            document.getElementById("content").value = "";
-            document.getElementById("imageInput").value = "";
-            fetchPosts();
-        } catch (e) {
-            alert("Ошибка! Проверь RLS политики в Supabase.");
-            console.error(e);
-        }
-    };
-
-    // --- ПОЛУЧЕНИЕ ПОСТОВ ---
-    async function fetchPosts() {
-        const { data, error } = await supabase
-            .from('requests')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) return console.error(error);
-
-        const feed = document.getElementById("feed");
-        feed.innerHTML = data.map(post => `
-            <div class="post">
-                <div class="post-header">
-                    <img src="${post.photo || ''}" class="post-avatar">
-                    <b>${post.name}</b>
-                    <span class="time">${new Date(post.created_at).toLocaleTimeString()}</span>
-                </div>
-                <p>${post.text || ""}</p>
-                ${post.imageUrl ? `<img src="${post.imageUrl}" class="post-image">` : ""}
-                <button class="like-btn" onclick="pressLike(${post.id}, ${post.likes})">👍 ${post.likes}</button>
-            </div>
-        `).join('');
+    async function logout() {
+      await supabase.auth.signOut()
+      document.getElementById('user').textContent = 'Not logged in'
     }
 
-    // Запуск при загрузке
-    fetchPosts();
-    // Автообновление каждые 5 сек
-    setInterval(fetchPosts, 5000);
+    async function loadUser() {
+      const { data: { user } } = await supabase.auth.getUser()
 
-</script>
+      document.getElementById('user').textContent =
+        user ? JSON.stringify(user, null, 2) : 'Not logged in'
+    }
+
+    supabase.auth.onAuthStateChange(() => loadUser())
+    loadUser()
+  </script>
 </body>
 </html>
