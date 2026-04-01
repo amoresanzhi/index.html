@@ -1,30 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-  <title>Google Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обновление Статуса</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; margin-top: 50px; }
+        .btn-group { display: flex; gap: 10px; }
+        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: #3ecf8e; color: white; transition: 0.3s; }
+        button:hover { background: #34b27b; }
+        #message { margin-top: 20px; color: #666; }
+    </style>
 </head>
 <body>
 
-<button onclick="login()">Войти через Google</button>
+    <h1>Мой текущий статус</h1>
+    
+    <div class="btn-group">
+        <button onclick="updateStatus('Учусь')">Учусь</button>
+        <button onclick="updateStatus('Отдыхаю')">Отдыхаю</button>
+        <button onclick="updateStatus('Работаю')">Работаю</button>
+    </div>
 
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    <p id="message">Нажми на кнопку, чтобы обновить статус...</p>
 
-  const supabase = createClient(
-    'https://dbfcdhjkdnguraqlkwdd.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRiZmNkaGprZG5ndXJhcWxrd2RkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5NjI5MzMsImV4cCI6MjA4OTUzODkzM30.KcDO1Wsw1NjWq4XoYvXFMHYdU_D2SOM8JHIk12FdO3U'
-  )
+    <script>
+        // 1. ТВОИ ДАННЫЕ ИЗ SUPABASE (Замени на свои!)
+        const SUPABASE_URL = 'https://vzzyjiohgmfdabziruow.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6enlqaW9oZ21mZGFiemlydW93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMDkxMjAsImV4cCI6MjA5MDU4NTEyMH0.SeJ6mqMrPwGMHVEe7nSBxxWeWO_NF0ArOSP4OlP4ZOM';
 
-  window.login = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google'
-    })
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    if (error) {
-      console.log(error)
-    }
-  }
-</script>
+        // 2. Функция отправки данных
+        async function updateStatus(status) {
+            const messageElement = document.getElementById('message');
+            messageElement.innerText = 'Отправка...';
 
+            const { data, error } = await supabase
+                .from('user_statuses')
+                .insert([{ status_text: status }]);
+
+            if (error) {
+                console.error('Ошибка:', error);
+                messageElement.innerText = 'Ошибка при сохранении ❌';
+            } else {
+                messageElement.innerText = `Статус "${status}" успешно сохранен! ✅`;
+            }
+        }
+    </script>
 </body>
 </html>
