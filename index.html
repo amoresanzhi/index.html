@@ -59,7 +59,7 @@
 
         async function fetchGroup() {
             const { data, error } = await supabase
-                .from('profiles')
+                .from('profi')
                 .select('*')
                 .order('username', { ascending: true });
 
