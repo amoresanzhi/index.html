@@ -45,7 +45,7 @@
 
         window.changeStatus = async (text, color) => {
             const { error } = await supabase
-                .from('profiles')
+                .from('profi')
                 .update({ status: text, color: color })
                 .eq('id', MY_ID);
 
