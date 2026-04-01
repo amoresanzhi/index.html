@@ -3,51 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Обновление Статуса</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>Supabase Status App</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; margin-top: 50px; }
-        .btn-group { display: flex; gap: 10px; }
-        button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 5px; background: #3ecf8e; color: white; transition: 0.3s; }
-        button:hover { background: #34b27b; }
-        #message { margin-top: 20px; color: #666; }
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
+        .user-item { 
+            display: flex; align-items: center; 
+            background: white; padding: 10px; 
+            margin-bottom: 8px; border-radius: 8px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status-dot { 
+            width: 12px; height: 12px; 
+            border-radius: 50%; margin-right: 15px; 
+        }
+        .controls { margin-bottom: 20px; }
+        button { padding: 8px 12px; cursor: pointer; margin-right: 5px; }
     </style>
 </head>
 <body>
 
-    <h1>Мой текущий статус</h1>
+    <div id="myinfo">Загрузка профиля...</div>
     
-    <div class="btn-group">
-        <button onclick="updateStatus('Учусь')">Учусь</button>
-        <button onclick="updateStatus('Отдыхаю')">Отдыхаю</button>
-        <button onclick="updateStatus('Работаю')">Работаю</button>
+    <div class="controls">
+        <h3>Обновить мой статус:</h3>
+        <button onclick="window.changeStatus('В сети', '#4CAF50')">В сети</button>
+        <button onclick="window.changeStatus('Занят', '#F44336')">Занят</button>
+        <button onclick="window.changeStatus('Обедаю', '#FF9800')">Обедаю</button>
     </div>
 
-    <p id="message">Нажми на кнопку, чтобы обновить статус...</p>
+    <hr>
+    <div id="grouplist"></div>
 
-    <script>
-        // 1. ТВОИ ДАННЫЕ ИЗ SUPABASE (Замени на свои!)
-        const SUPABASE_URL = 'https://vzzyjiohgmfdabziruow.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6enlqaW9oZ21mZGFiemlydW93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMDkxMjAsImV4cCI6MjA5MDU4NTEyMH0.SeJ6mqMrPwGMHVEe7nSBxxWeWO_NF0ArOSP4OlP4ZOM';
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const URL = 'https://vzzyjiohgmfdabziruow.supabase.co';
+        const KEY = 'sb_publishable_Oh8eBZWuDa_XbMqKBjtQMQ_BBk9563K'; // Используйте ваш актуальный ключ
+        const supabase = createClient(URL, KEY);
 
-        // 2. Функция отправки данных
-        async function updateStatus(status) {
-            const messageElement = document.getElementById('message');
-            messageElement.innerText = 'Отправка...';
+        const MY_ID = 'f6879cb7-3eb4-421a-acc6-c9bd89d10834';
 
-            const { data, error } = await supabase
-                .from('user_statuses')
-                .insert([{ status_text: status }]);
+        window.changeStatus = async (text, color) => {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ status: text, color: color })
+                .eq('id', MY_ID);
 
             if (error) {
-                console.error('Ошибка:', error);
-                messageElement.innerText = 'Ошибка при сохранении ❌';
+                alert("Ошибка! Проверьте RLS политики в Supabase.");
+                console.error(error);
             } else {
-                messageElement.innerText = `Статус "${status}" успешно сохранен! ✅`;
+                fetchGroup();
+            }
+        };
+
+        async function fetchGroup() {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .order('username', { ascending: true });
+
+            if (error) return console.error(error);
+
+            const list = document.getElementById('grouplist');
+            list.innerHTML = data.map(user => `
+                <div class="user-item">
+                    <div class="status-dot" style="background: ${user.color || '#ccc'}"></div>
+                    <div style="flex-grow: 1;">
+                        <strong>${user.username}</strong><br>
+                        <small style="color: #666;">${user.status || 'Статус не задан'}</small>
+                    </div>
+                </div>
+            `).join('');
+
+            const me = data.find(u => u.id === MY_ID);
+            if (me) {
+                document.getElementById('myinfo').innerText = `Вы зашли как: ${me.username}`;
             }
         }
+
+        // Первоначальная загрузка
+        fetchGroup();
+
+        // Обновление списка каждые 5 секунд
+        setInterval(fetchGroup, 5000);
+
     </script>
 </body>
 </html>
