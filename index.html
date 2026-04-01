@@ -16,15 +16,24 @@
             width: 12px; height: 12px; 
             border-radius: 50%; margin-right: 15px; 
         }
-        .controls { margin-bottom: 20px; }
-        button { padding: 8px 12px; cursor: pointer; margin-right: 5px; }
+        .controls { margin-bottom: 20px; padding: 15px; background: #eee; border-radius: 10px; }
+        button { padding: 8px 12px; cursor: pointer; margin-right: 5px; border-radius: 5px; border: 1px solid #ccc; }
+        .auth-btn { background: #4285F4; color: white; border: none; font-weight: bold; }
+        #logout-btn { background: #f44336; color: white; border: none; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="myinfo">Загрузка профиля...</div>
+    <div id="auth-section" style="margin-bottom: 20px;">
+        <button id="login-btn" class="auth-btn" onclick="window.signInWithGoogle()">Войти через Google</button>
+        <div id="user-info" style="display:none;">
+            <span id="myinfo">Загрузка профиля...</span>
+            <br>
+            <button id="logout-btn" onclick="window.logout()">Выйти</button>
+        </div>
+    </div>
     
-    <div class="controls">
+    <div id="status-controls" class="controls" style="display:none;">
         <h3>Обновить мой статус:</h3>
         <button onclick="window.changeStatus('В сети', '#4CAF50')">В сети</button>
         <button onclick="window.changeStatus('Занят', '#F44336')">Занят</button>
@@ -38,19 +47,55 @@
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
         const URL = 'https://vzzyjiohgmfdabziruow.supabase.co';
-        const KEY = 'sb_publishable_Oh8eBZWuDa_XbMqKBjtQMQ_BBk9563K'; // Используйте ваш актуальный ключ
+        const KEY = 'sb_publishable_Oh8eBZWuDa_XbMqKBjtQMQ_BBk9563K'; 
         const supabase = createClient(URL, KEY);
 
-        const MY_ID = 'f6879cb7-3eb4-421a-acc6-c9bd89d10834';
+        let MY_ID = null; // Теперь ID будет подтягиваться автоматически
+
+        // --- ФУНКЦИИ АВТОРИЗАЦИИ ---
+        
+        window.signInWithGoogle = async () => {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin // Возврат на текущий сайт
+                }
+            });
+            if (error) console.error("Ошибка входа:", error.message);
+        };
+
+        window.logout = async () => {
+            await supabase.auth.signOut();
+            window.location.reload();
+        };
+
+        async function checkUser() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                MY_ID = user.id; // Присваиваем ID вошедшего пользователя
+                document.getElementById('login-btn').style.display = 'none';
+                document.getElementById('user-info').style.display = 'block';
+                document.getElementById('status-controls').style.display = 'block';
+                fetchGroup(); // Загружаем список только после входа
+            } else {
+                document.getElementById('login-btn').style.display = 'block';
+                document.getElementById('user-info').style.display = 'none';
+                document.getElementById('status-controls').style.display = 'none';
+                fetchGroup(); // Список всё равно можно видеть
+            }
+        }
+
+        // --- РАБОТА СО СТАТУСАМИ ---
 
         window.changeStatus = async (text, color) => {
+            if (!MY_ID) return alert("Сначала войдите в аккаунт!");
+
             const { error } = await supabase
                 .from('profi')
-                .update({ status: text, color: color })
-                .eq('id', MY_ID);
+                .upsert({ id: MY_ID, status: text, color: color }) // upsert создаст запись, если её нет
 
             if (error) {
-                alert("Ошибка! Проверьте RLS политики в Supabase.");
+                alert("Ошибка! Проверьте RLS политики.");
                 console.error(error);
             } else {
                 fetchGroup();
@@ -70,22 +115,24 @@
                 <div class="user-item">
                     <div class="status-dot" style="background: ${user.color || '#ccc'}"></div>
                     <div style="flex-grow: 1;">
-                        <strong>${user.username}</strong><br>
+                        <strong>${user.username || 'Аноним'}</strong><br>
                         <small style="color: #666;">${user.status || 'Статус не задан'}</small>
                     </div>
                 </div>
             `).join('');
 
-            const me = data.find(u => u.id === MY_ID);
-            if (me) {
-                document.getElementById('myinfo').innerText = `Вы зашли как: ${me.username}`;
+            if (MY_ID) {
+                const me = data.find(u => u.id === MY_ID);
+                if (me) {
+                    document.getElementById('myinfo').innerText = `Вы зашли как: ${me.username}`;
+                } else {
+                    document.getElementById('myinfo').innerText = `Профиль в базе не найден. Установите статус!`;
+                }
             }
         }
 
-        // Первоначальная загрузка
-        fetchGroup();
-
-        // Обновление списка каждые 5 секунд
+        // Запуск
+        checkUser();
         setInterval(fetchGroup, 5000);
 
     </script>
