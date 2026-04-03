@@ -70,20 +70,24 @@
         };
 
         async function checkUser() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                MY_ID = user.id; // Присваиваем ID вошедшего пользователя
-                document.getElementById('login-btn').style.display = 'none';
-                document.getElementById('user-info').style.display = 'block';
-                document.getElementById('status-controls').style.display = 'block';
-                fetchGroup(); // Загружаем список только после входа
-            } else {
-                document.getElementById('login-btn').style.display = 'block';
-                document.getElementById('user-info').style.display = 'none';
-                document.getElementById('status-controls').style.display = 'none';
-                fetchGroup(); // Список всё равно можно видеть
-            }
-        }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+        MY_ID = user.id;
+        document.getElementById('login-btn').style.display = 'none';
+        document.getElementById('user-info').style.display = 'block';
+        document.getElementById('status-controls').style.display = 'block';
+        
+        // Берем имя из метаданных Google
+        const userName = user.user_metadata.full_name || user.email;
+        document.getElementById('myinfo').innerText = `Вы зашли как: ${userName}`;
+        
+        fetchGroup();
+    } else {
+        document.getElementById('login-btn').style.display = 'block';
+        document.getElementById('user-info').style.display = 'none';
+        document.getElementById('status-controls').style.display = 'none';
+    }
+}
 
         // --- РАБОТА СО СТАТУСАМИ ---
 
