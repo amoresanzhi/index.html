@@ -55,11 +55,15 @@
         // --- ФУНКЦИИ АВТОРИЗАЦИИ ---
         
         window.signInWithGoogle = async () => {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: window.location.origin // Возврат на текущий сайт
-                }
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            // ВАЖНО: Проверь, что имя папки 'google-auth-app' верное!
+            redirectTo: 'https://amoresanzhi.github.io/google-auth-app/' 
+        }
+    });
+    if (error) console.error("Ошибка входа:", error.message);
+};
             });
             if (error) console.error("Ошибка входа:", error.message);
         };
