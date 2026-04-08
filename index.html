@@ -3,146 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Supabase Status App</title>
+    <title>Dashboard - Almas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f4f4f9; }
-        .user-item { 
-            display: flex; align-items: center; 
-            background: white; padding: 10px; 
-            margin-bottom: 8px; border-radius: 8px; 
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .status-dot { 
-            width: 12px; height: 12px; 
-            border-radius: 50%; margin-right: 15px; 
-        }
-        .controls { margin-bottom: 20px; padding: 15px; background: #eee; border-radius: 10px; }
-        button { padding: 8px 12px; cursor: pointer; margin-right: 5px; border-radius: 5px; border: 1px solid #ccc; }
-        .auth-btn { background: #4285F4; color: white; border: none; font-weight: bold; }
-        #logout-btn { background: #f44336; color: white; border: none; margin-top: 10px; }
+        body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; }
     </style>
 </head>
 <body>
+    <div id="app" class="max-w-md mx-auto p-4 space-y-4">
+        
+        <div class="bg-white p-6 rounded-3xl shadow-sm text-center border border-gray-100">
+            <h2 class="font-bold text-xl mb-4">Дүйсенбек Алмас Әлфарабиұлы</h2>
+            <div class="flex items-center justify-center gap-2 text-blue-600 text-3xl font-bold mb-6">
+                <span>⏱</span> <span>{{ formattedTime }}</span>
+            </div>
+            
+            <button @click="stopSession" class="w-full bg-[#e63946] text-white py-3 rounded-xl font-semibold mb-3 flex items-center justify-center gap-2">
+                <span class="text-xl">⛔</span> Завершить сессию
+            </button>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button @click="toggleBreak" class="bg-[#ffb703] text-black py-3 rounded-xl font-semibold flex items-center justify-center gap-2">
+                    ☕ Перерыв
+                </button>
+                <button @click="exit" class="bg-[#6c757d] text-white py-3 rounded-xl font-semibold">
+                    Выход
+                </button>
+            </div>
+        </div>
 
-    <div id="auth-section" style="margin-bottom: 20px;">
-        <button id="login-btn" class="auth-btn" onclick="window.signInWithGoogle()">Войти через Google</button>
-        <div id="user-info" style="display:none;">
-            <span id="myinfo">Загрузка профиля...</span>
-            <br>
-            <button id="logout-btn" onclick="window.logout()">Выйти</button>
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-2 font-bold mb-4 justify-center">
+                <span>👥</span> Монитор группы
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 bg-gray-400 rounded-full"></span>
+                    <span class="font-bold">Sanzhar</span>
+                </div>
+                <div class="text-right text-blue-500">
+                    <div class="text-gray-500 text-xs flex items-center gap-1 justify-end">🏠 Дома</div>
+                    <div class="font-mono">0ч 0м 0с</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <div class="flex items-center gap-2 font-bold mb-4 justify-center">
+                <span>💬</span> Общий чат
+            </div>
+            
+            <div class="bg-gray-50 border rounded-xl p-3 h-48 overflow-y-auto mb-4 text-sm space-y-2">
+                <div v-for="msg in messages" :key="msg.id">
+                    <span class="font-bold">{{ msg.user_name }}:</span> {{ msg.text }}
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <input v-model="newMessage" @keyup.enter="sendMessage" type="text" placeholder="Сообщение..." class="flex-1 border rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <button @click="sendMessage" class="bg-[#2a9d8f] text-white p-3 rounded-xl hover:opacity-90">
+                    ➤
+                </button>
+            </div>
         </div>
     </div>
-    
-    <div id="status-controls" class="controls" style="display:none;">
-        <h3>Обновить мой статус:</h3>
-        <button onclick="window.changeStatus('В сети', '#4CAF50')">В сети</button>
-        <button onclick="window.changeStatus('Занят', '#F44336')">Занят</button>
-        <button onclick="window.changeStatus('Обедаю', '#FF9800')">Обедаю</button>
-    </div>
 
-    <hr>
-    <div id="grouplist"></div>
-
-    <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-
-        const URL = 'https://vzzyjiohgmfdabziruow.supabase.co';
-        const KEY = 'sb_publishable_Oh8eBZWuDa_XbMqKBjtQMQ_BBk9563K'; 
-        const supabase = createClient(URL, KEY);
-
-        let MY_ID = null; // Теперь ID будет подтягиваться автоматически
-
-        // --- ФУНКЦИИ АВТОРИЗАЦИИ ---
+    <script>
+        const { createApp, ref, onMounted, computed } = Vue;
         
-        window.signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            // ВАЖНО: Проверь, что имя папки 'google-auth-app' верное!
-            redirectTo: 'https://amoresanzhi.github.io/index.html/' 
-        }
-    });
-    if (error) console.error("Ошибка входа:", error.message);
-};
-            });
-            if (error) console.error("Ошибка входа:", error.message);
-        };
+        // --- ВСТАВЬ СВОИ ДАННЫЕ СЮДА ---
+        const SUPABASE_URL = 'https://vzzyjiohgmfdabziruow.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6enlqaW9oZ21mZGFiemlydW93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMDkxMjAsImV4cCI6MjA5MDU4NTEyMH0.SeJ6mqMrPwGMHVEe7nSBxxWeWO_NF0ArOSP4OlP4ZOM';
+        // ------------------------------
 
-        window.logout = async () => {
-            await supabase.auth.signOut();
-            window.location.reload();
-        };
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function checkUser() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-        MY_ID = user.id;
-        document.getElementById('login-btn').style.display = 'none';
-        document.getElementById('user-info').style.display = 'block';
-        document.getElementById('status-controls').style.display = 'block';
-        
-        // Берем имя из метаданных Google
-        const userName = user.user_metadata.full_name || user.email;
-        document.getElementById('myinfo').innerText = `Вы зашли как: ${userName}`;
-        
-        fetchGroup();
-    } else {
-        document.getElementById('login-btn').style.display = 'block';
-        document.getElementById('user-info').style.display = 'none';
-        document.getElementById('status-controls').style.display = 'none';
-    }
-}
+        createApp({
+            setup() {
+                const seconds = ref(37);
+                const messages = ref([]);
+                const newMessage = ref('');
+                const userName = 'Иманкулов Санжар';
 
-        // --- РАБОТА СО СТАТУСАМИ ---
+                // Таймер
+                setInterval(() => seconds.value++, 1000);
+                const formattedTime = computed(() => `${seconds.value} сек.`);
 
-        window.changeStatus = async (text, color) => {
-            if (!MY_ID) return alert("Сначала войдите в аккаунт!");
+                // Загрузка сообщений
+                const fetchMessages = async () => {
+                    const { data } = await supabase.from('messages').select('*').order('created_at', { ascending: true });
+                    messages.value = data || [];
+                };
 
-            const { error } = await supabase
-                .from('profi')
-                .upsert({ id: MY_ID, status: text, color: color }) // upsert создаст запись, если её нет
+                // Отправка сообщения
+                const sendMessage = async () => {
+                    if (!newMessage.value.trim()) return;
+                    await supabase.from('messages').insert([{ user_name: userName, text: newMessage.value }]);
+                    newMessage.value = '';
+                };
 
-            if (error) {
-                alert("Ошибка! Проверьте RLS политики.");
-                console.error(error);
-            } else {
-                fetchGroup();
+                // Подписка на обновления в реальном времени
+                onMounted(() => {
+                    fetchMessages();
+                    supabase.channel('custom-all-channel')
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+                        messages.value.push(payload.new);
+                    })
+                    .subscribe();
+                });
+
+                return { seconds, formattedTime, messages, newMessage, sendMessage };
             }
-        };
-
-        async function fetchGroup() {
-            const { data, error } = await supabase
-                .from('profi')
-                .select('*')
-                .order('username', { ascending: true });
-
-            if (error) return console.error(error);
-
-            const list = document.getElementById('grouplist');
-            list.innerHTML = data.map(user => `
-                <div class="user-item">
-                    <div class="status-dot" style="background: ${user.color || '#ccc'}"></div>
-                    <div style="flex-grow: 1;">
-                        <strong>${user.username || 'Аноним'}</strong><br>
-                        <small style="color: #666;">${user.status || 'Статус не задан'}</small>
-                    </div>
-                </div>
-            `).join('');
-
-            if (MY_ID) {
-                const me = data.find(u => u.id === MY_ID);
-                if (me) {
-                    document.getElementById('myinfo').innerText = `Вы зашли как: ${me.username}`;
-                } else {
-                    document.getElementById('myinfo').innerText = `Профиль в базе не найден. Установите статус!`;
-                }
-            }
-        }
-
-        // Запуск
-        checkUser();
-        setInterval(fetchGroup, 5000);
-
+        }).mount('#app');
     </script>
 </body>
 </html>
