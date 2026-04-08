@@ -3,104 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Dashboard - Group Monitor</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
-    <style>[v-cloak] { display: none; }</style>
+    <style>
+        [v-cloak] { display: none; }
+        body { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+        .custom-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05); }
+    </style>
 </head>
-<body class="bg-slate-100">
+<body>
 
     <div id="app" v-cloak class="max-w-md mx-auto p-4 space-y-4">
         
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm text-center border border-gray-50">
-            <h2 class="font-bold text-xl mb-4">Иманкулов Санжар</h2>
-            <div class="flex items-center justify-center gap-3 text-blue-500 text-4xl font-bold my-6">
-                <span>⏱</span> <span>{{ formattedTime }}</span>
-            </div>
-            <button @click="isOnline = false" class="w-full bg-[#f43f5e] text-white py-4 rounded-2xl font-bold mb-3 shadow-md">⛔ Завершить сессию</button>
-            <div class="grid grid-cols-2 gap-3">
-                <button @click="isOnline = false" class="bg-[#fbbf24] text-white py-4 rounded-2xl font-bold">☕ Перерыв</button>
-                <button @click="isOnline = true" class="bg-[#64748b] text-white py-4 rounded-2xl font-bold">Вход</button>
-            </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50 text-center">
-            <div class="font-bold text-indigo-900 mb-4">👥 Монитор группы</div>
-            <div class="flex justify-between items-center px-4">
-                <div class="flex items-center gap-2">
-                    <span :class="isOnline ? 'bg-green-500' : 'bg-gray-400'" class="w-3 h-3 rounded-full transition-all"></span>
-                    <span class="font-bold">Sanzhar</span>
-                </div>
-                <div class="text-right text-[10px] text-gray-400">🏠 Дома <br> <span class="text-blue-400 font-bold">0ч 0м 0с</span></div>
-            </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50">
-            <div class="font-bold text-indigo-900 mb-4 text-center">💬 Общий чат</div>
+        <div class="bg-white p-8 rounded-[2.5rem] text-center border border-gray-100 custom-shadow">
+            <h2 class="font-bold text-xl mb-4 text-slate-800">Иманкулов Санжар</h2>
             
-            <div id="chat-box" class="bg-gray-50 rounded-3xl p-4 h-64 overflow-y-auto mb-4 space-y-2 border border-gray-100">
-                <div v-for="msg in messages" :key="msg.id" class="text-sm">
-                    <span class="font-bold text-gray-800">{{ msg.user_name }}:</span> 
-                    <span class="text-gray-600">{{ msg.text }}</span>
+            <div class="flex items-center justify-center gap-3 text-blue-500 text-4xl font-bold my-6">
+                <span>⏱</span>
+                <span>{{ formattedTime }}</span>
+            </div>
+            
+            <button @click="myStatus = 'offline'" class="w-full bg-[#f43f5e] text-white py-4 rounded-2xl font-bold mb-3 active:scale-95 transition-all shadow-sm">
+                ⛔ Завершить сессию
+            </button>
+            
+            <div class="grid grid-cols-2 gap-3">
+                <button @click="myStatus = 'break'" class="bg-[#fbbf24] text-white py-4 rounded-2xl font-bold active:scale-95 transition-all">
+                    ☕ Перерыв
+                </button>
+                <button @click="myStatus = 'online'" class="bg-[#64748b] text-white py-4 rounded-2xl font-bold active:scale-95 transition-all">
+                    Вход
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-[2.5rem] border border-gray-100 custom-shadow">
+            <div class="flex items-center gap-2 font-bold mb-6 justify-center text-indigo-900 uppercase tracking-wider text-sm">
+                <span>👥 Монитор группы</span>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span :class="myStatus === 'online' ? 'bg-green-500' : 'bg-gray-400'" class="w-3 h-3 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]"></span>
+                        <span class="font-bold text-slate-700 text-lg">Санжар (Вы)</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-gray-400 text-[11px]">🏠 Дома</div>
+                        <div class="text-blue-400 font-mono text-xs font-bold">{{ formattedTime }}</div>
+                    </div>
                 </div>
-                <div v-if="messages.length === 0" class="text-center text-gray-300 mt-10 text-xs">Нет сообщений. Напишите первым!</div>
+
+                <div class="flex justify-between items-center opacity-90">
+                    <div class="flex items-center gap-3">
+                        <span class="bg-green-500 w-3 h-3 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]"></span>
+                        <span class="font-bold text-slate-700 text-lg">Almas</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-gray-400 text-[11px]">🏫 В колледже</div>
+                        <div class="text-blue-400 font-mono text-xs font-bold">1ч 12м 05с</div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="bg-gray-300 w-3 h-3 rounded-full"></span>
+                        <span class="font-bold text-gray-400 text-lg">Sanzhar</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-gray-300 text-[11px]">🏠 Дома</div>
+                        <div class="text-gray-300 font-mono text-xs font-bold">Offline</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-[2.5rem] border border-gray-100 custom-shadow">
+            <div class="flex items-center gap-2 font-bold mb-4 justify-center text-indigo-900 uppercase tracking-wider text-sm">
+                <span>💬 Общий чат</span>
+            </div>
+            
+            <div id="chat-box" class="bg-slate-50 rounded-3xl p-5 h-64 overflow-y-auto mb-4 space-y-4 border border-slate-100">
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-indigo-500 ml-1">ALMAS</span>
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-gray-100 inline-block max-w-[90%]">
+                        Всем привет! Я уже в колледже, жду всех в 302 кабинете. 🏫
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-end">
+                    <span class="text-[10px] font-bold text-emerald-500 mr-1">САНЖАР</span>
+                    <div class="bg-emerald-500 text-white p-3 rounded-2xl rounded-tr-none shadow-sm inline-block max-w-[90%]">
+                        Ок, я скоро буду! Выезжаю из дома через 5 минут. 🚗
+                    </div>
+                </div>
+
+                <div v-for="msg in messages" :key="msg.id" class="flex flex-col items-end">
+                    <span class="text-[10px] font-bold text-emerald-500 mr-1">САНЖАР</span>
+                    <div class="bg-emerald-500 text-white p-3 rounded-2xl rounded-tr-none shadow-sm inline-block max-w-[90%]">
+                        {{ msg.text }}
+                    </div>
+                </div>
             </div>
 
             <div class="flex gap-2">
-                <input v-model="newMessage" @keyup.enter="send" type="text" placeholder="Сообщение..." class="flex-1 bg-gray-50 rounded-2xl px-4 py-3 outline-none ring-1 ring-gray-200 focus:ring-2 focus:ring-emerald-500">
-                <button @click="send" class="bg-[#10b981] text-white w-12 h-12 rounded-2xl flex items-center justify-center">➤</button>
+                <input v-model="newMessage" @keyup.enter="send" type="text" placeholder="Написать сообщение..." 
+                    class="flex-1 bg-slate-50 border-none rounded-2xl px-5 py-4 outline-none ring-1 ring-slate-200 focus:ring-2 focus:ring-emerald-500 transition-all">
+                <button @click="send" class="bg-[#10b981] text-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-200 active:scale-90 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                        <path d="M3.478 2.405a.75.75 0 00-.926.94l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.405z" />
+                    </svg>
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        window.onload = function() {
-            const { createApp, ref, onMounted, computed } = Vue;
-            
-            const SB_URL = 'https://vzzyjiohgmfdabziruow.supabase.co';
-            const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6enlqaW9oZ21mZGFiemlydW93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMDkxMjAsImV4cCI6MjA5MDU4NTEyMH0.SeJ6mqMrPwGMHVEe7nSBxxWeWO_NF0ArOSP4OlP4ZOM';
+        const { createApp, ref, computed } = Vue;
 
-            const client = supabase.createClient(SB_URL, SB_KEY);
+        createApp({
+            setup() {
+                const seconds = ref(55);
+                const myStatus = ref('online');
+                const newMessage = ref('');
+                const messages = ref([]);
 
-            createApp({
-                setup() {
-                    const seconds = ref(0);
-                    const isOnline = ref(true);
-                    const messages = ref([]);
-                    const newMessage = ref('');
+                // Живой таймер
+                setInterval(() => {
+                    if (myStatus.value === 'online') {
+                        seconds.value++;
+                    }
+                }, 1000);
 
-                    setInterval(() => { if(isOnline.value) seconds.value++; }, 1000);
-                    const formattedTime = computed(() => `${seconds.value} сек.`);
+                const formattedTime = computed(() => {
+                    const h = Math.floor(seconds.value / 3600);
+                    const m = Math.floor((seconds.value % 3600) / 60);
+                    const s = seconds.value % 60;
+                    return `${h}ч ${m}м ${s}с`;
+                });
 
-                    const load = async () => {
-                        const { data, error } = await client.from('messages').select('*').order('created_at', { ascending: true });
-                        if (data) messages.value = data;
-                        if (error) console.error("Ошибка загрузки:", error.message);
-                    };
-
-                    const send = async () => {
-                        if (!newMessage.value.trim()) return;
-                        const m = newMessage.value;
-                        newMessage.value = '';
-                        const { error } = await client.from('messages').insert([{ user_name: 'Санжар', text: m }]);
-                        if (error) {
-                            alert("Ошибка отправки! Проверь RLS политики в Supabase.");
-                            console.error(error);
-                        }
-                    };
-
-                    onMounted(() => {
-                        load();
-                        client.channel('any').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, p => {
-                            messages.value.push(p.new);
-                        }).subscribe();
+                const send = () => {
+                    if (!newMessage.value.trim()) return;
+                    messages.value.push({
+                        id: Date.now(),
+                        text: newMessage.value
                     });
+                    newMessage.value = '';
+                    
+                    // Скролл вниз
+                    setTimeout(() => {
+                        const box = document.getElementById('chat-box');
+                        box.scrollTop = box.scrollHeight;
+                    }, 50);
+                };
 
-                    return { seconds, isOnline, formattedTime, messages, newMessage, send };
-                }
-            }).mount('#app');
-        };
+                return { seconds, formattedTime, myStatus, newMessage, messages, send };
+            }
+        }).mount('#app');
     </script>
 </body>
 </html>
