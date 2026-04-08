@@ -12,7 +12,7 @@
     <div id="app" class="max-w-md mx-auto p-4 space-y-4 shadow-lg">
         
         <div class="bg-white p-6 rounded-[2rem] text-center shadow-sm border border-gray-100">
-            <h2 class="font-bold text-lg mb-4 text-gray-800">Дүйсенбек Алмас Әлфарабиұлы</h2>
+            <h2 class="font-bold text-lg mb-4 text-gray-800">Иманкулов Санжар</h2>
             <div class="flex items-center justify-center gap-2 text-blue-500 text-3xl font-bold mb-6">
                 <span>⏱</span> <span>{{ formattedTime }}</span>
             </div>
@@ -70,13 +70,13 @@
     </div>
 
     <script>
+    window.onload = function() {
         const { createApp, ref, onMounted, computed } = Vue;
         
-        // --- ЗАМЕНИ ЭТИ ДАННЫЕ НА СВОИ ИЗ SUPABASE ---
+        // --- ПРОВЕРЬ ССЫЛКИ ЕЩЕ РАЗ ---
         const SUPABASE_URL = 'https://vzzyjiohgmfdabziruow.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6enlqaW9oZ21mZGFiemlydW93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMDkxMjAsImV4cCI6MjA5MDU4NTEyMH0.SeJ6mqMrPwGMHVEe7nSBxxWeWO_NF0ArOSP4OlP4ZOM';
-        // --------------------------------------------
-
+        
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         createApp({
@@ -84,58 +84,58 @@
                 const seconds = ref(0);
                 const messages = ref([]);
                 const newMessage = ref('');
-                const userName = 'Sanzhar'; // Имя отправителя
+                const userName = 'Sanzhar';
+                const isOnline = ref(true); // Состояние индикатора
 
                 // Таймер
-                setInterval(() => {
-                    seconds.value++;
-                }, 1000);
+                setInterval(() => { seconds.value++; }, 1000);
+                const formattedTime = computed(() => `${seconds.value} сек.`);
 
-                const formattedTime = computed(() => {
-                    const s = seconds.value;
-                    return `${s} сек.`;
-                });
+                // 1. Функция отправки сообщения
+                const sendMessage = async () => {
+                    if (!newMessage.value.trim()) return;
+                    const text = newMessage.value;
+                    newMessage.value = ''; 
 
-                // Загрузка сообщений
-                const fetchMessages = async () => {
-                    const { data, error } = await supabaseClient
+                    const { error } = await supabaseClient
                         .from('messages')
-                        .select('*')
-                        .order('created_at', { ascending: true });
+                        .insert([{ user_name: userName, text: text }]);
                     
+                    if (error) console.error("Ошибка чата:", error.message);
+                };
+
+                // 2. Функции кнопок
+                const stopSession = () => {
+                    isOnline.value = false;
+                    alert("Сессия завершена!");
+                };
+
+                const toggleBreak = () => {
+                    alert("Перерыв начат");
+                };
+
+                const fetchMessages = async () => {
+                    const { data } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
                     if (data) messages.value = data;
                 };
 
-                // Отправка сообщения
-                const sendMessage = async () => {
-                    if (!newMessage.value.trim()) return;
-                    
-                    const textToSend = newMessage.value;
-                    newMessage.value = ''; // очистить поле сразу
-
-                    await supabaseClient
-                        .from('messages')
-                        .insert([{ user_name: userName, text: textToSend }]);
-                };
-
-                // Подписка на Realtime
                 onMounted(() => {
                     fetchMessages();
-
                     supabaseClient
-                        .channel('schema-db-changes')
-                        .on('postgres_changes', 
-                            { event: 'INSERT', schema: 'public', table: 'messages' }, 
-                            (payload) => {
-                                messages.value.push(payload.new);
-                            }
-                        )
+                        .channel('any')
+                        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                            messages.value.push(payload.new);
+                        })
                         .subscribe();
                 });
 
-                return { seconds, formattedTime, messages, newMessage, sendMessage };
+                return { 
+                    seconds, formattedTime, messages, newMessage, 
+                    sendMessage, stopSession, toggleBreak, isOnline 
+                };
             }
         }).mount('#app');
-    </script>
+    };
+</script>
 </body>
 </html>
