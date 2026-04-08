@@ -3,139 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
+    <title>Dashboard - Sanzhar</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <style>
+        [v-cloak] { display: none; }
+        body { background-color: #f0f2f5; font-family: sans-serif; }
+    </style>
 </head>
-<body class="bg-slate-100 font-sans">
-    <div id="app" class="max-w-md mx-auto p-4 space-y-4 shadow-lg">
-        
-        <div class="bg-white p-6 rounded-[2rem] text-center shadow-sm border border-gray-100">
-            <h2 class="font-bold text-lg mb-4 text-gray-800">Иманкулов Санжар</h2>
-            <div class="flex items-center justify-center gap-2 text-blue-500 text-3xl font-bold mb-6">
-                <span>⏱</span> <span>{{ formattedTime }}</span>
-            </div>
-            
-            <button class="w-full bg-[#ef4444] text-white py-3 rounded-2xl font-bold mb-3 shadow-md active:scale-95 transition-transform">
-                ⛔ Завершить сессию
-            </button>
-            
-            <div class="grid grid-cols-2 gap-3">
-                <button class="bg-[#f59e0b] text-white py-3 rounded-2xl font-bold active:scale-95 transition-transform">
-                    ☕ Перерыв
-                </button>
-                <button class="bg-[#64748b] text-white py-3 rounded-2xl font-bold active:scale-95 transition-transform">
-                    Выход
-                </button>
-            </div>
-        </div>
+<body>
 
-        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
-            <div class="flex items-center gap-2 font-bold mb-4 justify-center text-indigo-900">
-                <span>👥</span> Монитор группы
-            </div>
-            <div class="flex justify-between items-center text-sm">
-                <div class="flex items-center gap-2">
-                    <span class="w-3 h-3 bg-gray-400 rounded-full"></span>
-                    <span class="font-bold">Sanzhar</span>
-                </div>
-                <div class="text-right">
-                    <div class="text-gray-500 text-[10px] flex items-center gap-1 justify-end">🏠 Дома</div>
-                    <div class="text-blue-400 font-mono text-xs font-bold">0ч 0м 0с</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100">
-            <div class="flex items-center gap-2 font-bold mb-4 justify-center text-indigo-900">
-                <span>💬</span> Общий чат
-            </div>
+    <div id="app" v-cloak>
+        <div class="max-w-md mx-auto p-4 space-y-4">
             
-            <div class="bg-gray-50 border border-gray-100 rounded-2xl p-4 h-48 overflow-y-auto mb-4 text-sm space-y-3">
-                <div v-for="msg in messages" :key="msg.id">
-                    <span class="font-extrabold text-gray-800">{{ msg.user_name }}:</span> 
-                    <span class="text-gray-600">{{ msg.text }}</span>
+            <div class="bg-white p-8 rounded-[2.5rem] shadow-sm text-center border border-gray-50">
+                <h2 class="font-bold text-xl mb-4 text-gray-800">Иманкулов Санжар</h2>
+                
+                <div class="flex items-center justify-center gap-3 text-[#3b82f6] text-4xl font-bold my-6">
+                    <span>⏱</span>
+                    <span>{{ formattedTime }}</span>
+                </div>
+                
+                <button @click="stopSession" class="w-full bg-[#f43f5e] text-white py-4 rounded-2xl font-bold mb-3 shadow-sm active:scale-[0.98] transition-all">
+                    ⛔ Завершить сессию
+                </button>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <button @click="toggleBreak" class="bg-[#fbbf24] text-white py-4 rounded-2xl font-bold active:scale-[0.98] transition-all">
+                        ☕ Перерыв
+                    </button>
+                    <button @click="isOnline = true" class="bg-[#64748b] text-white py-4 rounded-2xl font-bold active:scale-[0.98] transition-all">
+                        Вход
+                    </button>
                 </div>
             </div>
 
-            <div class="flex gap-2">
-                <input v-model="newMessage" @keyup.enter="sendMessage" type="text" placeholder="Сообщение..." 
-                    class="flex-1 border border-gray-200 rounded-2xl px-4 py-2 focus:outline-none focus:border-emerald-500 bg-gray-50">
-                <button @click="sendMessage" class="bg-[#10b981] text-white p-3 rounded-xl hover:bg-emerald-600">
-                    ➤
-                </button>
+            <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50">
+                <div class="flex items-center gap-2 font-bold mb-4 justify-center text-[#4338ca]">
+                    <span>👥 Монитор группы</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span :class="isOnline ? 'bg-green-500' : 'bg-gray-400'" class="w-3 h-3 rounded-full transition-colors shadow-sm"></span>
+                        <span class="font-bold text-gray-700">Almas</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-gray-400 text-[10px] mb-1">🏠 Дома</div>
+                        <div class="text-[#60a5fa] font-mono text-xs font-bold">0ч 0м 0с</div>
+                    </div>
+                </div>
             </div>
+
+            <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-50">
+                <div class="flex items-center gap-2 font-bold mb-4 justify-center text-[#4338ca]">
+                    <span>💬 Общий чат</span>
+                </div>
+                
+                <div id="chat-box" class="bg-gray-50 rounded-3xl p-4 h-56 overflow-y-auto mb-4 space-y-3 text-sm border border-gray-100">
+                    <div v-for="msg in messages" :key="msg.id">
+                        <span class="font-black text-gray-800">{{ msg.user_name }}:</span> 
+                        <span class="text-gray-600 ml-1">{{ msg.text }}</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <input v-model="newMessage" @keyup.enter="sendMessage" type="text" placeholder="Сообщение..." 
+                        class="flex-1 bg-gray-50 border-none rounded-2xl px-5 py-3 outline-none ring-1 ring-gray-100 focus:ring-2 focus:ring-emerald-500">
+                    <button @click="sendMessage" class="bg-[#10b981] text-white w-12 h-12 rounded-2xl flex items-center justify-center hover:bg-emerald-600">
+                        ➤
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
-    window.onload = function() {
-        const { createApp, ref, onMounted, computed } = Vue;
-        
-        // --- ПРОВЕРЬ ССЫЛКИ ЕЩЕ РАЗ ---
-        const SUPABASE_URL = 'https://vzzyjiohgmfdabziruow.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6enlqaW9oZ21mZGFiemlydW93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMDkxMjAsImV4cCI6MjA5MDU4NTEyMH0.SeJ6mqMrPwGMHVEe7nSBxxWeWO_NF0ArOSP4OlP4ZOM';
-        
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        window.onload = function() {
+            const { createApp, ref, onMounted, computed } = Vue;
+            
+            // --- ВСТАВЬ СВОИ ДАННЫЕ ТУТ ---
+            const SUPABASE_URL = 'https://vzzyjiohgmfdabziruow.supabase.co';
+            const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6enlqaW9oZ21mZGFiemlydW93Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwMDkxMjAsImV4cCI6MjA5MDU4NTEyMH0.SeJ6mqMrPwGMHVEe7nSBxxWeWO_NF0ArOSP4OlP4ZOM';
+            // ------------------------------
 
-        createApp({
-            setup() {
-                const seconds = ref(0);
-                const messages = ref([]);
-                const newMessage = ref('');
-                const userName = 'Sanzhar';
-                const isOnline = ref(true); // Состояние индикатора
+            const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-                // Таймер
-                setInterval(() => { seconds.value++; }, 1000);
-                const formattedTime = computed(() => `${seconds.value} сек.`);
+            createApp({
+                setup() {
+                    const seconds = ref(0);
+                    const messages = ref([]);
+                    const newMessage = ref('');
+                    const userName = 'Sanzhar';
+                    const isOnline = ref(true); // Состояние индикатора (зеленый/серый)
 
-                // 1. Функция отправки сообщения
-                const sendMessage = async () => {
-                    if (!newMessage.value.trim()) return;
-                    const text = newMessage.value;
-                    newMessage.value = ''; 
+                    // Таймер
+                    setInterval(() => { if (isOnline.value) seconds.value++; }, 1000);
+                    const formattedTime = computed(() => `${seconds.value} сек.`);
 
-                    const { error } = await supabaseClient
-                        .from('messages')
-                        .insert([{ user_name: userName, text: text }]);
-                    
-                    if (error) console.error("Ошибка чата:", error.message);
-                };
+                    // Функции кнопок
+                    const stopSession = () => {
+                        isOnline.value = false;
+                        alert("Сессия завершена");
+                    };
 
-                // 2. Функции кнопок
-                const stopSession = () => {
-                    isOnline.value = false;
-                    alert("Сессия завершена!");
-                };
+                    const toggleBreak = () => {
+                        isOnline.value = !isOnline.value; // Переключает цвет при нажатии
+                    };
 
-                const toggleBreak = () => {
-                    alert("Перерыв начат");
-                };
+                    // Чат
+                    const fetchMessages = async () => {
+                        const { data } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
+                        if (data) messages.value = data;
+                    };
 
-                const fetchMessages = async () => {
-                    const { data } = await supabaseClient.from('messages').select('*').order('created_at', { ascending: true });
-                    if (data) messages.value = data;
-                };
+                    const sendMessage = async () => {
+                        if (!newMessage.value.trim()) return;
+                        const text = newMessage.value;
+                        newMessage.value = '';
+                        await supabaseClient.from('messages').insert([{ user_name: userName, text: text }]);
+                    };
 
-                onMounted(() => {
-                    fetchMessages();
-                    supabaseClient
-                        .channel('any')
-                        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                    onMounted(() => {
+                        fetchMessages();
+                        supabaseClient.channel('chat').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
                             messages.value.push(payload.new);
-                        })
-                        .subscribe();
-                });
+                        }).subscribe();
+                    });
 
-                return { 
-                    seconds, formattedTime, messages, newMessage, 
-                    sendMessage, stopSession, toggleBreak, isOnline 
-                };
-            }
-        }).mount('#app');
-    };
-</script>
+                    return { seconds, formattedTime, messages, newMessage, sendMessage, isOnline, stopSession, toggleBreak };
+                }
+            }).mount('#app');
+        };
+    </script>
 </body>
 </html>
